@@ -1,0 +1,393 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+using namespace std;
+string filename = "clientdata.txt"; 
+void menuscreen ();
+void login();
+struct stclientinfo
+{
+ string accountnummber; 
+ string pincode; 
+ string name; 
+ string phonenumber; 
+ double balance; 
+};
+stclientinfo currentclientinfo;
+enum enchoce
+{
+    quick = 1,
+    normwithdraw = 2,
+    deposit = 3 , 
+    check =4, 
+    exitt = 5  
+};
+
+vector <string>changelinetorecord(string x, string seprator)
+{
+    short pos = 0;
+    string sword;
+    vector <string> c;
+    while (x.find(seprator) != std::string::npos)
+    {
+        pos = x.find(seprator);
+        sword = x.substr(0, pos);
+        if (sword != " ")
+        {
+            c.push_back(sword);
+
+        }
+        if (sword != " ")
+        {
+            x.erase(0, pos + seprator.length());
+        }
+
+    }
+    if (x != "")
+    {
+        c.push_back(x);
+
+    } 
+    return c; 
+}
+stclientinfo changelinetorecordinstruct(string x)
+{
+    vector <string >j; 
+    j = changelinetorecord( x,"#//#");
+    stclientinfo clientifo; 
+    if (j.size() == 5)
+    {clientifo.accountnummber= j[0];
+     clientifo.pincode = j[1];
+     clientifo.name = j[2];
+     clientifo.phonenumber = j[3];
+     clientifo.balance = stod(j[4]);
+    }
+    else
+    {
+        clientifo.accountnummber = "";
+        clientifo.pincode = "";
+        clientifo.name = "";
+        clientifo.phonenumber = "";
+        clientifo.balance = 0;
+    }
+	return clientifo;
+}
+string changeinfotoline(stclientinfo clientinfo, string seperator = "//")
+{
+    string word = clientinfo.accountnummber + seperator;
+    word += clientinfo.pincode + seperator;
+    word += clientinfo.name + seperator;
+    word += clientinfo.phonenumber + seperator;
+    word += to_string(clientinfo.balance);
+    return word;
+}
+vector <stclientinfo>fromfiletovec()
+{
+    fstream myfile; 
+    stclientinfo clientinfo; 
+    vector <stclientinfo> vecclient;
+    myfile.open(filename, ios::in);
+    if (myfile.is_open())
+    {
+        string c; 
+        while (getline(myfile, c))
+        {
+            clientinfo = changelinetorecordinstruct(c);
+            if (clientinfo.accountnummber != "")
+            {
+                vecclient.push_back(clientinfo);
+            }
+        }
+		myfile.close();
+    }
+    return vecclient; 
+}
+void fromvectofileandclearall(vector <stclientinfo> vect)
+{
+    fstream myfile; 
+    string sword;
+    myfile.open(filename, ios::out);
+    if (myfile.is_open())
+    {
+        for (stclientinfo c : vect)
+        {
+            sword = changeinfotoline(c, "#//#");
+            myfile << sword << endl; 
+        }
+    }
+}
+void changeinvector(stclientinfo clientinfo, vector <stclientinfo> &j )
+{
+    for (stclientinfo &c : j)
+    {
+        if (c.accountnummber == clientinfo.accountnummber)
+        {
+            c = clientinfo; 
+            return; 
+            
+        }
+    }
+
+}
+void changefilebycurrent()
+{
+    vector <stclientinfo>j; 
+    j= fromfiletovec(); 
+    changeinvector(currentclientinfo, j); 
+    fromvectofileandclearall(j);
+
+}
+
+void headforall(string x )
+{
+    cout << "=====================================================\n"; 
+    cout << "                  "<<x<<endl ;
+    cout << "=====================================================\n";
+}
+void quickmenu()
+{
+    headforall("Quick Withdraw");
+    cout << "\t[1] 20        [2] 50 \n";
+    cout << "\t[3] 100       [4] 200 \n";
+    cout << "\t[5] 400       [6] 600 \n";
+    cout << "\t[5] 400       [6] 600 \n";
+    cout << "\t[7] 800       [8] 1000 \n";
+    cout << "\t[9] Exit        \n";
+    cout << "=====================================================\n\n";
+}
+short answerquick()
+{
+    short x; 
+    do {
+        cout << "Choose what to whithdraw? [ 1 to 9 ] ? ";
+        cin >> x;
+    } while (x > 9 || x < 1); 
+	int arr[9] = { 20, 50, 100, 200, 400, 600, 800, 1000, -1 };
+    return arr[x-1]; 
+    }
+void printbalance()
+{cout << "Your Current Balance is : " << currentclientinfo.balance << endl;}
+bool isexcced(int x)
+{
+    return (currentclientinfo.balance < x); 
+}
+void theammountexcedmessage()
+{
+    cout << "\n\nthe amount exceeds your balance , make another choice.\n"; 
+}
+bool ishesure()
+{
+    char x= 'n';
+    cout << "\n\nAre you Want to perform this transaction? y/n ? ";
+    cin >> x; 
+    cout << endl << endl; 
+    return (x=='y'||x=='Y');
+
+}
+void quickwithdraw()
+{
+    system("cls");
+    quickmenu();
+	printbalance();
+    short x = answerquick(); 
+    if (x == -1)
+    {
+        system("cls");
+        menuscreen(); 
+    }
+     else if  (isexcced(x))
+    {
+        theammountexcedmessage(); 
+
+    }
+     else
+    {
+        if (ishesure())
+        {
+            currentclientinfo.balance -= x;
+            changefilebycurrent();
+            cout << "\n\nDone successfully. new balance is : " << currentclientinfo.balance << endl<<endl;
+
+        }
+    }
+
+
+
+}
+bool isdivon5(short x)
+{
+    return (x%5==0);
+}
+void normalwithdraw()
+{
+    system("cls");
+	headforall("Normal Withdraw");
+    int x; 
+        do
+        {
+            cout << "\nEnter an amount mulitible of 5,s ? "; 
+            cin >> x; 
+            if (isexcced(x))
+            {
+                theammountexcedmessage();
+                return ; 
+            }
+    } while (!isdivon5(x));
+        if (ishesure())
+        {
+            currentclientinfo.balance -= x; 
+            changefilebycurrent(); 
+			cout << "\n\nDone successfully. new balance is : " << currentclientinfo.balance << endl;
+        }
+}
+void depositt()
+{
+    int x;
+    system("cls");
+	headforall("Deposit Screen");
+    do
+    {
+        cout << "Enter a posive deposit amount ? "; 
+        cin >> x; 
+
+	} while (x <= 0);
+    if (ishesure())
+    {
+        currentclientinfo.balance += x;
+        changefilebycurrent();
+        cout << "\n\nDone successfully. new balance is : " << currentclientinfo.balance << endl << endl;
+    }
+}
+void checkbalance()
+{
+    system("cls");
+	headforall("Check Balance Screen");
+    cout << "your balance is " << currentclientinfo.balance << endl << endl << endl; 
+}
+void showmenu()
+{
+    headforall("ATM Main Menu");
+    cout << "\t1. Quick Withdraw\n";
+    cout << "\t2. Normal Withdraw\n";
+    cout << "\t3. Deposit\n";
+    cout << "\t4. Check Balance\n";
+    cout << "\t5. LogOut\n";
+    cout << "====================================================\n\n";
+}
+enchoce getchoice()
+{
+    short x; 
+    do {
+    cout <<"Choose what do want to do? [ 1 to 5 ] ? ";
+    cin >> x;
+    
+    } while (x > 5 || x < 1);
+	return (enchoce)x;
+    
+}
+void atmfunction(enchoce choice)
+{
+    switch (choice)
+    {case enchoce::quick:
+        system("cls"); 
+        quickwithdraw();
+		cout << "\n\nPress any key to continue..."; 
+        system("pause>0");
+        menuscreen();
+      
+    case enchoce::normwithdraw:
+        system("cls");
+        normalwithdraw();
+        cout << "\n\nPress any key to continue...";
+        system("pause>0");
+        menuscreen();
+    case enchoce::deposit:
+        system("cls");
+        depositt();
+        cout << "\n\nPress any key to continue...";
+        system("pause>0");
+        menuscreen();
+    case enchoce::check:
+        system("cls");
+      checkbalance ();
+        cout << "\n\nPress any key to continue...";
+        system("pause>0");
+        menuscreen();
+    case enchoce::exitt:
+        system("cls");
+        login(); 
+
+    }
+                                                                                                
+		
+  
+}
+void menuscreen()
+{
+    system("cls");
+	showmenu();
+    atmfunction(getchoice());
+	
+}
+bool checkandandmark(string accountnumber, string password, stclientinfo &clientinfo )
+{
+    vector <stclientinfo> vec; 
+    vec = fromfiletovec(); 
+    for (stclientinfo &c : vec)
+    {
+        if (c.accountnummber == accountnumber && c.pincode == password)
+        {
+            clientinfo = c; 
+            return 1;
+        }
+    }
+    return false; 
+}
+bool isvalidaccount(string accountnumber, string password)
+{
+    return checkandandmark(accountnumber, password, currentclientinfo); 
+
+
+}
+void loginhead()
+{
+    cout << "\n\n-------------------------------\n";
+    cout << "         Login Screen\n"; 
+    cout << "-------------------------------\n";
+}
+void login()
+{
+    system("cls");
+        loginhead(); 
+   string accountnumber, password;
+    cout << "Enter account number : ";
+    getline(cin>>ws ,accountnumber );
+    cout << "Enter Pin : ";
+    getline(cin , password);
+    if (isvalidaccount(accountnumber, password))
+    {
+        menuscreen(); 
+
+    }
+    while (!isvalidaccount(accountnumber, password))
+	{
+		system("cls");
+        loginhead();
+        cout << "Invalid Account Number/Pincode!";
+        cout << "\nEnter account number : ";
+        getline(cin >> ws, accountnumber);
+        cout << "Enter Pin : ";
+        getline(cin, password);
+
+    }
+    menuscreen(); 
+}
+
+int main()
+{
+    login(); 
+	return 0;
+   
+}
+
